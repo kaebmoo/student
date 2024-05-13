@@ -22,4 +22,5 @@ excludeB = left_result[left_result['Alpha code'].isna()]
 
 ##เลือกเฉพาะข้อมูลที่ไม่ตรงกับด้านซ้าย
 excludeA = right_result[right_result['Name'].isna()]
+
 print(excludeA)
