@@ -2,10 +2,10 @@ import pandas as pd
 
 dataframe = pd.read_csv('.\Peace\EXP_DATA_30042024.csv')
 dataframe['G/L'] = dataframe['G/L'].apply(str)
-condition1 = pd.read_excel('.\Peace\condition.xlsx')
+all_condition = pd.read_excel('.\Peace\condition.xlsx')
 
 #ลบตัว X ออกจากเงื่อนไขรหัสที่ 1
-condition1 = condition1.iloc[0,0].replace('X','')
+condition1 = all_condition.iloc[0,0].replace('X','')
 
 #เลือกรหัส 516017XX
 filtered = dataframe.loc[dataframe['G/L'].str.contains(('^'+condition1+'\d{2}$'), regex=True)]
