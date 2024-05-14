@@ -11,4 +11,4 @@ filtered = dataframe.loc[dataframe['G/L'].str.contains((condition6), regex=True)
 
 #นำ record ที่ไม่มีรหัสกระบวนการทางธุรกิจ ออก
 NoBP = filtered[filtered['Bus. Process'].isna()]
-NoBP.to_csv('NoBP_เดินทางเพื่อปฏิบัติงาน.csv')
+NoBP.to_csv('./Peace/test/result/NoBP_เดินทางเพื่อปฏิบัติงาน.csv')
