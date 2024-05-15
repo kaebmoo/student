@@ -1,6 +1,6 @@
 import pandas as pd
 
-dataframe = pd.read_csv('.\Peace\EXP_DATA_30042024.csv')
+dataframe = pd.read_csv('./Peace/30042024.csv')
 dataframe['G/L'] = dataframe['G/L'].apply(str)
 all_condition = pd.read_excel('.\Peace\condition.xlsx')
 cancel_number = pd.read_excel('.\Peace\condition.xlsx', 'รหัสกิจกรรมยกเลิก')
