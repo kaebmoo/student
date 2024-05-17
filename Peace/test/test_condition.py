@@ -6,14 +6,14 @@ shutil.rmtree('./Peace/test/combine_result', ignore_errors=True)
 os.makedirs('./Peace/test/combine_result')
 
 dataframe = pd.read_csv('./Peace/30042024.csv', dtype=str)
-all_condition = pd.read_excel('.\Peace\condition.xlsx')
+all_condition = pd.read_excel('./Peace/condition.xlsx')
 
 #นำเข้ารหัส Product ยกเลิก
-cancel_product = pd.read_excel('.\Peace\condition.xlsx', 'รหัส Product ยกเลิก', dtype=str)
+cancel_product = pd.read_excel('./Peace/condition.xlsx', 'รหัส Product ยกเลิก', dtype=str)
 cancel_product = cancel_product['รหัส']
 
 #นำเข้ารหัสกิจกรรมยกเลิก
-cancel_act = pd.read_excel('.\Peace\condition.xlsx', 'รหัสกิจกรรมยกเลิก')
+cancel_act = pd.read_excel('./Peace/condition.xlsx', 'รหัสกิจกรรมยกเลิก')
 cancel_act = cancel_act['Act']
 
 #เปลี่ยน X เป็น \d เพื่อใช้ใน regex
@@ -32,6 +32,7 @@ write_header_noten = True
 write_header_notej = True
 write_header_scp = True
 write_header_cancel_act = True
+write_header_nobp_ex = True
 
 #print(all_condition['เงื่อนไข 1'].str[10:12])
 
@@ -104,4 +105,8 @@ for index, row in all_condition.iterrows():
                 write_header_cancel_act = False
 
     else :
-        print('false')
+        excluded = dataframe.loc[~dataframe['G/L'].str.contains('51642196','51642197', na=False)]
+        target = excluded.loc[excluded['G/L'].str.contains((row['รหัส']), na=False, regex=True)]
+        NoBP_excluded = target[target['Bus. Process'].isna()]
+        NoBP_excluded.to_csv('./Peace/test/combine_result/NoBP_excluded.csv', index_label='Index', mode='a', header=write_header_nobp_ex)
+        write_header_nobp_ex = False
