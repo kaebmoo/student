@@ -8,6 +8,11 @@ os.makedirs('./Peace/test/combine_result')
 dataframe = pd.read_csv('./Peace/30042024.csv', dtype=str)
 all_condition = pd.read_excel('./Peace/condition.xlsx')
 
+#ใส่ชื่อบัญชี
+account_name = pd.read_excel('./Peace/รหัสศูนย์ต้นทุน-รหัสบัญชี.xlsx', 'G L', dtype=str)
+dataframe = pd.merge(dataframe.drop(columns=['Stat']), account_name, on='G/L', how='left')
+dataframe = dataframe[['บันทึกแล้ว', 'Stat', '    งวด', 'ผู้ใช้', 'G/L', 'กลับรายการ', 'เลขเอกสาร', 'Pstng Date', 'ว/ทเอกสาร', 'ประเภท', 'ศ.เงินทุน', 'ศ.ต้นทุน', 'Bus. Process', 'ผลิตภัณฑ์/', 'Carrier/Op', 'เซกเมนต์', 'ศูนย์กำไร', 'BP', '    Amt in loc.cur.', 'Tx', 'ข้อความ', 'ส/ท ซ่อม', 'SNoซ', 'วัสดุ']] 
+
 #นำเข้ารหัส Product ยกเลิก
 cancel_product = pd.read_excel('./Peace/condition.xlsx', 'รหัส Product ยกเลิก', dtype=str)
 cancel_product = cancel_product['รหัส']
@@ -20,19 +25,19 @@ cancel_act = cancel_act['Act']
 all_condition['รหัส'] = all_condition['รหัส'].str.replace('X','\d')
 
 #ตัวแปรเพื่อเช็คว่าควรเขียน header หรือไม่สำหรับแต่ละไฟล์
-write_header_nobp = True
-write_header_notrne = True
-write_header_notn = True
-write_header_not51 = True
-write_header_not54 = True
-write_header_notP192 = True
-write_header_notj = True
+write_header_bp = True
+write_header_rne = True
+write_header_n = True
+write_header_51 = True
+write_header_54 = True
+write_header_P192 = True
+write_header_j = True
 write_header_sca = True
-write_header_noten = True
-write_header_notej = True
+write_header_en = True
+write_header_ej = True
 write_header_scp = True
 write_header_cancel_act = True
-write_header_nobp_ex = True
+write_header_bp_ex = True
 
 #print(all_condition['เงื่อนไข 1'].str[10:12])
 
@@ -43,70 +48,70 @@ for index, row in all_condition.iterrows():
     if pd.isna(row['เงื่อนไข 2']):
         match row['เงื่อนไข 1']:
             case 'บันทึกรหัสกระบวนการทางธุรกิจ':
-                NoBP = filtered[filtered['Bus. Process'].isna()]
-                NoBP.to_csv('./Peace/test/combine_result/NoBP.csv', mode='a', index_label='Index', header=write_header_nobp)
-                write_header_nobp = False
+                NoBP = filtered[~filtered['Bus. Process'].isna()]
+                NoBP.to_csv('./Peace/test/combine_result/saved_act.csv', mode='a', index = False, header=write_header_bp)
+                write_header_bp = False
 
             case 'บันทึกรหัสกระบวนการทางธุรกิจ (กิจกรรม R, N, E)':
-                NotRNE = filtered.loc[~filtered['Bus. Process'].str.contains('[RNE]{1}[A-Z0-9]{4}$', na=False, regex=True)]
-                NotRNE.to_csv('./Peace/test/combine_result/NotRNE.csv', mode='a', index_label='Index', header=write_header_notrne)
-                write_header_notrne = False
+                NotRNE = filtered.loc[filtered['Bus. Process'].str.contains('[RNE]{1}[A-Z0-9]{4}$', na=False, regex=True)]
+                NotRNE.to_csv('./Peace/test/combine_result/act_RNE.csv', mode='a', index = False, header=write_header_rne)
+                write_header_rne = False
 
             case 'บันทึกรหัสกระบวนการทางธุรกิจ (N)':
-                NotN = filtered.loc[~filtered['Bus. Process'].str.contains('[N]{1}[A-Z0-9]{4}$', na=False, regex=True)]
-                NotN.to_csv('./Peace/test/combine_result/NotN.csv', mode='a', index_label='Index', header=write_header_notn)
-                write_header_notn = False
+                NotN = filtered.loc[filtered['Bus. Process'].str.contains('[N]{1}[A-Z0-9]{4}$', na=False, regex=True)]
+                NotN.to_csv('./Peace/test/combine_result/act_N.csv', mode='a', index = False, header=write_header_n)
+                write_header_n = False
             
             case 'บันทึกรหัสกระบวนการทางธุรกิจ (กิจกรรม J)':
-                NotJ = filtered.loc[~filtered['Bus. Process'].str.contains('[J]{1}[A-Z0-9]{4}$', na=False, regex=True)]
-                NotJ.to_csv('./Peace/test/combine_result/NotJ.csv', mode='a', index_label='Index', header=write_header_notj)
-                write_header_notj = False
+                NotJ = filtered.loc[filtered['Bus. Process'].str.contains('[J]{1}[A-Z0-9]{4}$', na=False, regex=True)]
+                NotJ.to_csv('./Peace/test/combine_result/act_J.csv', mode='a', index = False, header=write_header_j)
+                write_header_j = False
 
             case 'รหัสบัญชี 51XXXXXX เท่านั้น':
                 filtered = dataframe.loc[dataframe['Bus. Process'].str.contains((row['รหัส']+'$'), na=False, regex=True)]
-                Not51 = filtered.loc[~filtered['G/L'].str.contains(('^51'), regex=True)]
-                Not51.to_csv('./Peace/test/combine_result/Not51.csv', mode='a', index_label='Index', header=write_header_not51)
-                write_header_not51 = False
+                Not51 = filtered.loc[filtered['G/L'].str.contains(('^51'), regex=True)]
+                Not51.to_csv('./Peace/test/combine_result/GL51.csv', mode='a', index = False, header=write_header_51)
+                write_header_51 = False
 
             case 'รหัสบัญชี 54XXXXXX เท่านั้น':
                 filtered = dataframe.loc[dataframe['Bus. Process'].str.contains((row['รหัส']+'$'), na=False, regex=True)]
-                Not54 = filtered.loc[~filtered['G/L'].str.contains(('^54'), regex=True)]
-                Not54.to_csv('./Peace/test/combine_result/Not54.csv', mode='a', index_label='Index', header=write_header_not54)
-                write_header_not54 = False
+                Not54 = filtered.loc[filtered['G/L'].str.contains(('^54'), regex=True)]
+                Not54.to_csv('./Peace/test/combine_result/GL54.csv', mode='a', index = False, header=write_header_54)
+                write_header_54 = False
 
             case 'บันทึกเข้า Product 192020001':
-                NotP = filtered[~filtered['ผลิตภัณฑ์/'].str.contains(('192020001'), na=False)]
-                NotP.to_csv('./Peace/test/combine_result/NotProduct192020001.csv', index_label='Index', mode='a', header=write_header_notP192)
-                write_header_notP192 = False
+                NotP = filtered[filtered['ผลิตภัณฑ์/'].str.contains(('192020001'), na=False)]
+                NotP.to_csv('./Peace/test/combine_result/Product192020001.csv', index = False, mode='a', header=write_header_P192)
+                write_header_P192 = False
 
             case 'ยกเลิก/ห้ามบันทึก':
                 specific_cancel_act = dataframe.loc[dataframe['Bus. Process'].str.contains((row['รหัส']+'$'), na=False, regex=True)]
-                specific_cancel_act.to_csv('./Peace/test/combine_result/SCA.csv', index_label='Index', mode='a', header=write_header_sca)
+                specific_cancel_act.to_csv('./Peace/test/combine_result/SCA.csv', index = False, mode='a', header=write_header_sca)
                 write_header_sca = False
 
             case 'บันทึกรหัสกระบวนการทางธุรกิจ (กิจกรรม E, N)':
-                NotEN = filtered.loc[~filtered['Bus. Process'].str.contains('[EN]{1}[A-Z0-9]{4}$', na=False, regex=True)]
-                NotEN.to_csv('./Peace/test/combine_result/NotEN.csv', index_label='Index', mode='a', header=write_header_noten)
-                write_header_noten = False
+                NotEN = filtered.loc[filtered['Bus. Process'].str.contains('[EN]{1}[A-Z0-9]{4}$', na=False, regex=True)]
+                NotEN.to_csv('./Peace/test/combine_result/act_EN.csv', mode='a', index = False, header=write_header_en)
+                write_header_en = False
                 
             case 'บันทึกรหัสกระบวนการทางธุรกิจ (กิจกรรม E, J)':
-                NotEJ = filtered.loc[~filtered['Bus. Process'].str.contains('[EJ]{1}[A-Z0-9]{4}$', na=False, regex=True)]
-                NotEJ.to_csv('./Peace/test/combine_result/NotEJ.csv', index_label='Index', mode='a', header=write_header_notej)
-                write_header_notej = False
+                NotEJ = filtered.loc[filtered['Bus. Process'].str.contains('[EJ]{1}[A-Z0-9]{4}$', na=False, regex=True)]
+                NotEJ.to_csv('./Peace/test/combine_result/act_EJ.csv', mode='a', index = False, header=write_header_ej)
+                write_header_ej = False
             
             case 'ห้ามบันทึกรหัส Product ยกเลิก':
-                saved_cancel_product = filtered.loc[filtered['ผลิตภัณฑ์/'].str.contains('|'.join(cancel_product), na=False)]
-                saved_cancel_product.to_csv('./Peace/test/combine_result/Cancel_product.csv', index_label='Index', mode='a', header=write_header_scp)
+                saved_cancel_product = filtered.loc[~filtered['ผลิตภัณฑ์/'].str.contains('|'.join(cancel_product), na=False)]
+                saved_cancel_product.to_csv('./Peace/test/combine_result/not_cancel_product.csv', mode='a', index = False, header=write_header_scp)
                 write_header_scp = False
 
             case 'ห้ามบันทึกรหัสกิจกรรมที่ยกเลิก':
-                saved_cancel_act = filtered.loc[filtered['Bus. Process'].str.contains('|'.join(cancel_act), na=False)]
-                saved_cancel_act.to_csv('./Peace/test/combine_result/Cancel_act.csv', index_label='Index', mode='a', header=write_header_cancel_act)
+                saved_cancel_act = filtered.loc[~filtered['Bus. Process'].str.contains('|'.join(cancel_act), na=False)]
+                saved_cancel_act.to_csv('./Peace/test/combine_result/not_cancel_act.csv', mode='a', index = False, header=write_header_cancel_act)
                 write_header_cancel_act = False
 
     else :
         excluded = dataframe.loc[~dataframe['G/L'].str.contains('51642196','51642197', na=False)]
         target = excluded.loc[excluded['G/L'].str.contains((row['รหัส']), na=False, regex=True)]
-        NoBP_excluded = target[target['Bus. Process'].isna()]
-        NoBP_excluded.to_csv('./Peace/test/combine_result/NoBP_excluded.csv', index_label='Index', mode='a', header=write_header_nobp_ex)
-        write_header_nobp_ex = False
+        NoBP_excluded = target[~target['Bus. Process'].isna()]
+        NoBP_excluded.to_csv('./Peace/test/combine_result/saved_act_excluded.csv', mode='a', index = False, header=write_header_bp_ex)
+        write_header_bp_ex = False
