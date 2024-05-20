@@ -11,7 +11,8 @@ all_condition = pd.read_excel('./Peace/condition.xlsx')
 #ใส่ชื่อบัญชี
 account_name = pd.read_excel('./Peace/รหัสศูนย์ต้นทุน-รหัสบัญชี.xlsx', 'G L', dtype=str)
 dataframe = pd.merge(dataframe.drop(columns=['Stat']), account_name, on='G/L', how='left')
-dataframe = dataframe[['บันทึกแล้ว', 'Stat', '    งวด', 'ผู้ใช้', 'G/L', 'กลับรายการ', 'เลขเอกสาร', 'Pstng Date', 'ว/ทเอกสาร', 'ประเภท', 'ศ.เงินทุน', 'ศ.ต้นทุน', 'Bus. Process', 'ผลิตภัณฑ์/', 'Carrier/Op', 'เซกเมนต์', 'ศูนย์กำไร', 'BP', '    Amt in loc.cur.', 'Tx', 'ข้อความ', 'ส/ท ซ่อม', 'SNoซ', 'วัสดุ']] 
+col = dataframe.pop('Stat')
+dataframe.insert(1, col.name, col)
 
 #นำเข้ารหัส Product ยกเลิก
 cancel_product = pd.read_excel('./Peace/condition.xlsx', 'รหัส Product ยกเลิก', dtype=str)
@@ -38,8 +39,6 @@ write_header_ej = True
 write_header_scp = True
 write_header_cancel_act = True
 write_header_bp_ex = True
-
-#print(all_condition['เงื่อนไข 1'].str[10:12])
 
 #ต้องเช็ค row ใน condition มีเงื่อนไขอะไร
 for index, row in all_condition.iterrows():
