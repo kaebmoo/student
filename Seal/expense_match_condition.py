@@ -23,13 +23,13 @@ df['G/L'] = df['G/L'].astype(str)
 df['ACTIVITY'] = df['ACTIVITY'].astype(str)
 filtered_df1 = df[df['ACTIVITY'] != ""]
 print(filtered_df1)
-# Apply the function to filter df1
+# Apply the function to filter filtered_df1
 filtered_df1 = regex_filter(filtered_df1, df_condition)
 
 # Print the filtered dataframe
 print(filtered_df1)
 
-# Extract regex patterns from df2
+# Extract regex patterns from df_gl_bp
 regex_gl = df_gl_bp['G/L (regex)'].tolist()
 # Create a combined regex pattern
 combined_regex = "|".join(regex_gl)
