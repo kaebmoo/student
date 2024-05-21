@@ -38,7 +38,7 @@ def preprocess_conditions(condition_table):
 def apply_conditions(main_df, condition_table, cancel_product, cancel_act, output_directory):
     for index, row in condition_table.iterrows():
         find_pattern = row['find']
-        exclude_pattern = row['exclude']
+        exclude_pattern = row['exclude G/L']
         filtered_df = main_df.loc[main_df['G/L'].str.contains(row['รหัส'], na=False, regex=True)]
 
         if pd.notna(exclude_pattern):
@@ -53,13 +53,15 @@ def apply_conditions(main_df, condition_table, cancel_product, cancel_act, outpu
             elif 'cancel_act' in find_pattern.lower():
                 filtered_df = filtered_df.loc[filtered_df['Bus. Process'].str.contains('|'.join(cancel_act), na=False)]
             else:
-                filtered_df = filtered_df.loc[filtered_df['Bus. Process'].str.contains(find_pattern, na=False, regex=True)]
+                filtered_df = filtered_df.loc[~filtered_df['Bus. Process'].str.contains(find_pattern, na=False, regex=True)]
 
         output_path = os.path.join(output_directory, f'result_{index + 1}.csv')
         filtered_df.to_csv(output_path, index=False)
 
 def main():
+    ##### output folder #####
     output_directory = './Peace/test/All_condition_result'
+
     setup_output_directory(output_directory)
     condition_table, main_df, account_name, cancel_product, cancel_act = load_data()
     main_df = add_account_name(main_df, account_name)
