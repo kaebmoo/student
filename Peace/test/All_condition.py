@@ -1,6 +1,7 @@
 import pandas as pd
 import shutil
 import os
+import re
 
 shutil.rmtree('./Peace/test/All_condition_result', ignore_errors=True)
 os.makedirs('./Peace/test/All_condition_result')
@@ -23,7 +24,7 @@ cancel_act = pd.read_excel('./Peace/condition.xlsx', 'รหัสกิจก�
 cancel_act = cancel_act['Act']
 
 #เปลี่ยน X เป็น \d เพื่อใช้ใน regex
-condition_table['รหัส'] = condition_table['รหัส'].str.replace('X','\\d')
+condition_table['รหัส'] = condition_table['รหัส'].apply(lambda x: re.sub(r'[Xx]', r'\\d', x))
 
 #ตรวจสอบเงื่อนไขแต่ละแถว
 for index, row in condition_table.iterrows():

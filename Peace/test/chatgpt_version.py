@@ -1,27 +1,38 @@
 import pandas as pd
 import shutil
 import os
+import re
 
 def setup_output_directory(directory_path):
     shutil.rmtree(directory_path, ignore_errors=True)
     os.makedirs(directory_path)
 
 def load_data():
+    #ตารางเงื่อนไข
     condition_table = pd.read_excel('./Peace/condition.xlsx', dtype=str)
+
+    #ข้อมูลที่ต้องการนำมากรอง
     main_df = pd.read_csv('./Peace/30042024.csv', dtype=str)
+
+    #ตารางรหัสศูนย์ต้นทุน-รหัสบัญชี
     account_name = pd.read_excel('./Peace/รหัสศูนย์ต้นทุน-รหัสบัญชี.xlsx', 'G L', dtype=str)
+
+    #ตารางรวมรหัส กิจกรรม, Product ยกเลิก
     cancel_product = pd.read_excel('./Peace/condition.xlsx', 'รหัส Product ยกเลิก', dtype=str)['รหัส']
     cancel_act = pd.read_excel('./Peace/condition.xlsx', 'รหัสกิจกรรมยกเลิก')['Act']
+
     return condition_table, main_df, account_name, cancel_product, cancel_act
 
-def merge_account_name(main_df, account_name):
+#สำหรับใส่ชื่อ G/L ในคอลัมน์ stat
+def add_account_name(main_df, account_name):
     main_df = pd.merge(main_df.drop(columns=['Stat']), account_name, on='G/L', how='left')
     col = main_df.pop('Stat')
     main_df.insert(1, col.name, col)
     return main_df
 
+#เปลี่ยน X,x ในตารางเงื่อนไขเป็น \d เพื่อใช้ใน regex
 def preprocess_conditions(condition_table):
-    condition_table['รหัส'] = condition_table['รหัส'].str.replace('X', '\\d')
+    condition_table['รหัส'] = condition_table['รหัส'].apply(lambda x: re.sub(r'[Xx]', r'\\d', x))
     return condition_table
 
 def apply_conditions(main_df, condition_table, cancel_product, cancel_act, output_directory):
@@ -51,7 +62,7 @@ def main():
     output_directory = './Peace/test/All_condition_result'
     setup_output_directory(output_directory)
     condition_table, main_df, account_name, cancel_product, cancel_act = load_data()
-    main_df = merge_account_name(main_df, account_name)
+    main_df = add_account_name(main_df, account_name)
     condition_table = preprocess_conditions(condition_table)
     apply_conditions(main_df, condition_table, cancel_product, cancel_act, output_directory)
     print("Filtering and saving completed.")
