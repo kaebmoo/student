@@ -5,7 +5,7 @@ import os
 shutil.rmtree('./Peace/test/All_condition_result', ignore_errors=True)
 os.makedirs('./Peace/test/All_condition_result')
 
-condition_table = pd.read_excel('./Peace/condition.xlsx')
+condition_table = pd.read_excel('./Peace/condition.xlsx', dtype=str)
 main_df = pd.read_csv('./Peace/30042024.csv', dtype=str)
 
 #ใส่ชื่อบัญชี
@@ -25,25 +25,31 @@ cancel_act = cancel_act['Act']
 #เปลี่ยน X เป็น \d เพื่อใช้ใน regex
 condition_table['รหัส'] = condition_table['รหัส'].str.replace('X','\d')
 
-# Iterate over each row in the condition table
+#ตรวจสอบเงื่อนไขแต่ละแถว
 for index, row in condition_table.iterrows():
     find_pattern = row['find']
     exclude_pattern = row['exclude']
     filtered_df = main_df.loc[main_df['G/L'].str.contains((row['รหัส']), na=False, regex=True)]
 
+    #ถ้ามีเงื่อนไข exclude ให้ตัดออกก่อน
     if pd.notna(exclude_pattern):
         filtered_df = filtered_df.loc[~filtered_df['G/L'].str.contains(exclude_pattern, na=False)]
 
+    #exclude ออกแล้วให้ทำเงื่อนไขที่ 1
     if pd.notna(find_pattern):
+
+        #เงื่อนไขที่ต้องการเจาะจงรหัสผลิตภัณฑ์
         if 'product ' in find_pattern.lower():
             find_pattern = str(''.join(filter(str.isdigit, find_pattern)))
             filtered_df = filtered_df[filtered_df['ผลิตภัณฑ์/'].str.contains(find_pattern, na=False)]
 
+        #เงื่อนไขที่มีผลิตภัณฑ์ยกเลิก
         elif 'cancel_product' in find_pattern.lower():
-            filtered_df = filtered_df.loc[~filtered_df['ผลิตภัณฑ์/'].str.contains('|'.join(cancel_product), na=False)]
+            filtered_df = filtered_df.loc[filtered_df['ผลิตภัณฑ์/'].str.contains('|'.join(cancel_product), na=False)]
 
+        #เงื่อนไขที่มีกิจกรรมยกเลิก
         elif 'cancel_act' in find_pattern.lower():
-            filtered_df = filtered_df.loc[~filtered_df['Bus. Process'].str.contains('|'.join(cancel_act), na=False)]
+            filtered_df = filtered_df.loc[filtered_df['Bus. Process'].str.contains('|'.join(cancel_act), na=False)]
 
         else:
             filtered_df = filtered_df.loc[filtered_df['Bus. Process'].str.contains(find_pattern, na=False, regex=True)]
