@@ -12,7 +12,7 @@ def load_data():
     condition_table = pd.read_excel('./Program/condition.xlsx', dtype=str)
 
     #ข้อมูลที่ต้องการนำมากรอง
-    main_df = pd.read_csv('./Program/30042024.csv', dtype=str)
+    main_df = pd.read_csv('./Program/data.csv', dtype=str)
 
     #ตารางรหัสศูนย์ต้นทุน-รหัสบัญชี
     account_name = pd.read_excel('./Program/รหัสศูนย์ต้นทุน-รหัสบัญชี.xlsx', 'G L', dtype=str)
