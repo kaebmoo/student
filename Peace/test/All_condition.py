@@ -3,59 +3,71 @@ import shutil
 import os
 import re
 
-shutil.rmtree('./Peace/test/All_condition_result', ignore_errors=True)
-os.makedirs('./Peace/test/All_condition_result')
+def setup_output_directory(directory_path):
+    shutil.rmtree(directory_path, ignore_errors=True)
+    os.makedirs(directory_path)
 
-condition_table = pd.read_excel('./Peace/condition.xlsx', dtype=str)
-main_df = pd.read_csv('./Peace/30042024.csv', dtype=str)
+def load_data():
+    #ตารางเงื่อนไข
+    condition_table = pd.read_excel('./Peace/condition.xlsx', dtype=str)
 
-#ใส่ชื่อบัญชี
-account_name = pd.read_excel('./Peace/รหัสศูนย์ต้นทุน-รหัสบัญชี.xlsx', 'G L', dtype=str)
-main_df = pd.merge(main_df.drop(columns=['Stat']), account_name, on='G/L', how='left')
-col = main_df.pop('Stat')
-main_df.insert(1, col.name, col)
+    #ข้อมูลที่ต้องการนำมากรอง
+    main_df = pd.read_csv('./Peace/30042024.csv', dtype=str)
 
-#นำเข้ารหัส Product ยกเลิก
-cancel_product = pd.read_excel('./Peace/condition.xlsx', 'รหัส Product ยกเลิก', dtype=str)
-cancel_product = cancel_product['รหัส']
+    #ตารางรหัสศูนย์ต้นทุน-รหัสบัญชี
+    account_name = pd.read_excel('./Peace/รหัสศูนย์ต้นทุน-รหัสบัญชี.xlsx', 'G L', dtype=str)
 
-#นำเข้ารหัสกิจกรรมยกเลิก
-cancel_act = pd.read_excel('./Peace/condition.xlsx', 'รหัสกิจกรรมยกเลิก')
-cancel_act = cancel_act['Act']
+    #ตารางรวมรหัส กิจกรรม, Product ยกเลิก
+    cancel_product = pd.read_excel('./Peace/condition.xlsx', 'รหัส Product ยกเลิก', dtype=str)['รหัส']
+    cancel_act = pd.read_excel('./Peace/condition.xlsx', 'รหัสกิจกรรมยกเลิก')['Act']
 
-#เปลี่ยน X เป็น \d เพื่อใช้ใน regex
-condition_table['รหัส'] = condition_table['รหัส'].apply(lambda x: re.sub(r'[Xx]', r'\\d', x))
+    return condition_table, main_df, account_name, cancel_product, cancel_act
 
-#ตรวจสอบเงื่อนไขแต่ละแถว
-for index, row in condition_table.iterrows():
-    find_pattern = row['find']
-    exclude_pattern = row['exclude']
-    filtered_df = main_df.loc[main_df['G/L'].str.contains((row['รหัส']), na=False, regex=True)]
+#สำหรับใส่ชื่อ G/L ในคอลัมน์ stat
+def add_account_name(main_df, account_name):
+    main_df = pd.merge(main_df.drop(columns=['Stat']), account_name, on='G/L', how='left')
+    col = main_df.pop('Stat')
+    main_df.insert(1, col.name, col)
+    return main_df
 
-    #ถ้ามีเงื่อนไข exclude ให้ตัดออกก่อน
-    if pd.notna(exclude_pattern):
-        filtered_df = filtered_df.loc[~filtered_df['G/L'].str.contains(exclude_pattern, na=False)]
+#เปลี่ยน X,x ในตารางเงื่อนไขเป็น \d เพื่อใช้ใน regex
+def preprocess_conditions(condition_table):
+    condition_table['รหัส'] = condition_table['รหัส'].apply(lambda x: re.sub(r'[Xx]', r'\\d', x))
+    return condition_table
 
-    #exclude ออกแล้วให้ทำเงื่อนไขที่ 1
-    if pd.notna(find_pattern):
+def apply_conditions(main_df, condition_table, cancel_product, cancel_act, output_directory):
+    for index, row in condition_table.iterrows():
+        find_pattern = row['find']
+        exclude_pattern = row['exclude G/L']
+        filtered_df = main_df.loc[main_df['G/L'].str.contains(row['รหัส'], na=False, regex=True)]
 
-        #เงื่อนไขที่ต้องการเจาะจงรหัสผลิตภัณฑ์
-        if 'product ' in find_pattern.lower():
-            find_pattern = str(''.join(filter(str.isdigit, find_pattern)))
-            filtered_df = filtered_df[filtered_df['ผลิตภัณฑ์/'].str.contains(find_pattern, na=False)]
+        if pd.notna(exclude_pattern):
+            filtered_df = filtered_df.loc[~filtered_df['G/L'].str.contains(exclude_pattern, na=False)]
 
-        #เงื่อนไขที่มีผลิตภัณฑ์ยกเลิก
-        elif 'cancel_product' in find_pattern.lower():
-            filtered_df = filtered_df.loc[filtered_df['ผลิตภัณฑ์/'].str.contains('|'.join(cancel_product), na=False)]
+        if pd.notna(find_pattern):
+            if 'product ' in find_pattern.lower():
+                product_code = ''.join(filter(str.isdigit, find_pattern))
+                filtered_df = filtered_df[filtered_df['ผลิตภัณฑ์/'].str.contains(product_code, na=False)]
+            elif 'cancel_product' in find_pattern.lower():
+                filtered_df = filtered_df.loc[filtered_df['ผลิตภัณฑ์/'].str.contains('|'.join(cancel_product), na=False)]
+            elif 'cancel_act' in find_pattern.lower():
+                filtered_df = filtered_df.loc[filtered_df['Bus. Process'].str.contains('|'.join(cancel_act), na=False)]
+            else:
+                filtered_df = filtered_df.loc[~filtered_df['Bus. Process'].str.contains(find_pattern, na=False, regex=True)]
 
-        #เงื่อนไขที่มีกิจกรรมยกเลิก
-        elif 'cancel_act' in find_pattern.lower():
-            filtered_df = filtered_df.loc[filtered_df['Bus. Process'].str.contains('|'.join(cancel_act), na=False)]
+        output_path = os.path.join(output_directory, f'result_{index + 1}.csv')
+        filtered_df.to_csv(output_path, index=False)
 
-        else:
-            filtered_df = filtered_df.loc[filtered_df['Bus. Process'].str.contains(find_pattern, na=False, regex=True)]
+def main():
+    ##### output folder #####
+    output_directory = './Peace/test/All_condition_result'
 
-    output_path = f'./Peace/test/All_condition_result/result_{index+1}.csv'
-    filtered_df.to_csv(output_path, index=False)
+    setup_output_directory(output_directory)
+    condition_table, main_df, account_name, cancel_product, cancel_act = load_data()
+    main_df = add_account_name(main_df, account_name)
+    condition_table = preprocess_conditions(condition_table)
+    apply_conditions(main_df, condition_table, cancel_product, cancel_act, output_directory)
+    print("Filtering and saving completed.")
 
-print("Filtering and saving completed.")
+if __name__ == "__main__":
+    main()
