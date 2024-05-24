@@ -53,6 +53,12 @@ def apply_conditions(main_df, condition_table, cancel_product, cancel_act, outpu
                 filtered_df = filtered_df.loc[~filtered_df['ผลิตภัณฑ์/'].str.contains(product_code, na=False)]
                 filtered_df = pd.concat([filtered_product, filtered_df])
 
+            elif 'act ' in find_pattern.lower():
+                act_code = find_pattern.split()
+                act_code = act_code[1]
+                filtered_act = main_df.loc[main_df['Bus. Process'].str.contains(act_code, na=False)]
+                filtered_df = filtered_act.loc[~filtered_act['G/L'].str.contains(row['รหัส'], na=False, regex=True)]
+
             elif 'cancel_product' in find_pattern.lower():
                 filtered_df = filtered_df.loc[filtered_df['ผลิตภัณฑ์/'].str.contains('|'.join(cancel_product), na=False)]
             elif 'cancel_act' in find_pattern.lower():
