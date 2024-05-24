@@ -4,37 +4,32 @@ import os
 import re
 from pathlib import Path
 
+# ตารางเงื่อนไข
+condition_table = pd.read_excel('./Program/condition.xlsx', dtype=str)
+
+# ข้อมูลที่ต้องการนำมากรอง
+main_df = pd.read_csv('./Program/data.csv', dtype=str)
+
+# ตารางรหัสศูนย์ต้นทุน-รหัสบัญชี
+account_name = pd.read_excel('./Program/รหัสศูนย์ต้นทุน-รหัสบัญชี.xlsx', 'G L', dtype=str)
+
+# ตารางรวมรหัส กิจกรรม, Product ยกเลิก
+cancel_product = pd.read_excel('./Program/condition.xlsx', 'รหัส Product ยกเลิก', dtype=str)['รหัส']
+cancel_act = pd.read_excel('./Program/condition.xlsx', 'รหัสกิจกรรมยกเลิก')['Act']
+
+# ---------------------------------------------------------------------------------------------------#
+
+# สำหรับใส่ชื่อ G/L ในคอลัมน์ stat
+main_df = pd.merge(main_df.drop(columns=['Stat']), account_name, on='G/L', how='left')
+col = main_df.pop('Stat')
+main_df.insert(1, col.name, col)
+
 def setup_output_directory(directory_path):
     shutil.rmtree(directory_path, ignore_errors=True)
     Path(directory_path).mkdir(parents=True, exist_ok=True)
 
-def load_data():
-    #ตารางเงื่อนไข
-    condition_table = pd.read_excel('./Program/condition.xlsx', dtype=str)
-
-    #ข้อมูลที่ต้องการนำมากรอง
-    main_df = pd.read_csv('./Program/data.csv', dtype=str)
-
-    #ตารางรหัสศูนย์ต้นทุน-รหัสบัญชี
-    account_name = pd.read_excel('./Program/รหัสศูนย์ต้นทุน-รหัสบัญชี.xlsx', 'G L', dtype=str)
-
-    #ตารางรวมรหัส กิจกรรม, Product ยกเลิก
-    cancel_product = pd.read_excel('./Program/condition.xlsx', 'รหัส Product ยกเลิก', dtype=str)['รหัส']
-    cancel_act = pd.read_excel('./Program/condition.xlsx', 'รหัสกิจกรรมยกเลิก')['Act']
-
-    return condition_table, main_df, account_name, cancel_product, cancel_act
-
-#สำหรับใส่ชื่อ G/L ในคอลัมน์ stat
-def add_account_name(main_df, account_name):
-    main_df = pd.merge(main_df.drop(columns=['Stat']), account_name, on='G/L', how='left')
-    col = main_df.pop('Stat')
-    main_df.insert(1, col.name, col)
-    return main_df
-
-#เปลี่ยน X,x ในตารางเงื่อนไขเป็น \d เพื่อใช้ใน regex
-def preprocess_conditions(condition_table):
-    condition_table['รหัส'] = condition_table['รหัส'].apply(lambda x: re.sub(r'[Xx]', r'\\d', x))
-    return condition_table
+# เปลี่ยน X,x ในตารางเงื่อนไขเป็น \d เพื่อใช้ใน regex
+condition_table['รหัส'] = condition_table['รหัส'].apply(lambda x: re.sub(r'[Xx]', r'\\d', x))
 
 def apply_conditions(main_df, condition_table, cancel_product, cancel_act, output_directory):
     for index, row in condition_table.iterrows():
@@ -54,8 +49,7 @@ def apply_conditions(main_df, condition_table, cancel_product, cancel_act, outpu
                 filtered_df = pd.concat([filtered_product, filtered_df])
 
             elif 'act ' in find_pattern.lower():
-                act_code = find_pattern.split()
-                act_code = act_code[1]
+                act_code = find_pattern.split()[1]
                 filtered_act = main_df.loc[main_df['Bus. Process'].str.contains(act_code, na=False)]
                 filtered_df = filtered_act.loc[~filtered_act['G/L'].str.contains(row['รหัส'], na=False, regex=True)]
 
@@ -68,17 +62,17 @@ def apply_conditions(main_df, condition_table, cancel_product, cancel_act, outpu
         else:
             filtered_df = filtered_df.loc[filtered_df['Bus. Process'].isna()]
 
+        #เพิ่มคอลัมน์ 'เงื่อนไข' ลงใน DataFrame ที่กรองแล้ว
+        filtered_df = filtered_df.assign(เงื่อนไข1 = row['เงื่อนไข 1'])
+        filtered_df = filtered_df.assign(เงื่อนไข2 = row['เงื่อนไข 2'])
+
         output_path = os.path.join(output_directory, f'result_{index + 1}.csv')
         filtered_df.to_csv(output_path, index=False)
 
 def main():
-    ##### output folder #####
+    #ตั้งค่าโฟลเดอร์ผลลัพธ์
     output_directory = './Program/Filter_result'
-
     setup_output_directory(output_directory)
-    condition_table, main_df, account_name, cancel_product, cancel_act = load_data()
-    main_df = add_account_name(main_df, account_name)
-    condition_table = preprocess_conditions(condition_table)
     apply_conditions(main_df, condition_table, cancel_product, cancel_act, output_directory)
     print("Filtering and saving completed.")
 
