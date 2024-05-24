@@ -48,7 +48,11 @@ def apply_conditions(main_df, condition_table, cancel_product, cancel_act, outpu
         if pd.notna(find_pattern):
             if 'product ' in find_pattern.lower():
                 product_code = ''.join(filter(str.isdigit, find_pattern))
+                filtered_product = main_df.loc[main_df['ผลิตภัณฑ์/'].str.contains(product_code, na=False)]
+                filtered_product = filtered_product.loc[~filtered_product['G/L'].str.contains(row['รหัส'], na=False, regex=True)]
                 filtered_df = filtered_df.loc[~filtered_df['ผลิตภัณฑ์/'].str.contains(product_code, na=False)]
+                filtered_df = pd.concat([filtered_product, filtered_df])
+
             elif 'cancel_product' in find_pattern.lower():
                 filtered_df = filtered_df.loc[filtered_df['ผลิตภัณฑ์/'].str.contains('|'.join(cancel_product), na=False)]
             elif 'cancel_act' in find_pattern.lower():
