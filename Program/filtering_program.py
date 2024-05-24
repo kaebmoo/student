@@ -2,10 +2,11 @@ import pandas as pd
 import shutil
 import os
 import re
+from pathlib import Path
 
 def setup_output_directory(directory_path):
     shutil.rmtree(directory_path, ignore_errors=True)
-    os.makedirs(directory_path)
+    Path(directory_path).mkdir(parents=True, exist_ok=True)
 
 def load_data():
     #ตารางเงื่อนไข
@@ -47,13 +48,15 @@ def apply_conditions(main_df, condition_table, cancel_product, cancel_act, outpu
         if pd.notna(find_pattern):
             if 'product ' in find_pattern.lower():
                 product_code = ''.join(filter(str.isdigit, find_pattern))
-                filtered_df = filtered_df[filtered_df['ผลิตภัณฑ์/'].str.contains(product_code, na=False)]
+                filtered_df = filtered_df.loc[~filtered_df['ผลิตภัณฑ์/'].str.contains(product_code, na=False)]
             elif 'cancel_product' in find_pattern.lower():
                 filtered_df = filtered_df.loc[filtered_df['ผลิตภัณฑ์/'].str.contains('|'.join(cancel_product), na=False)]
             elif 'cancel_act' in find_pattern.lower():
                 filtered_df = filtered_df.loc[filtered_df['Bus. Process'].str.contains('|'.join(cancel_act), na=False)]
             else:
-                filtered_df = filtered_df.loc[~filtered_df['Bus. Process'].str.contains(find_pattern, na=False, regex=True)]
+                filtered_df = filtered_df.loc[filtered_df['Bus. Process'].str.contains(find_pattern, na=False, regex=True)]
+        else:
+            filtered_df = filtered_df.loc[filtered_df['Bus. Process'].isna()]
 
         output_path = os.path.join(output_directory, f'result_{index + 1}.csv')
         filtered_df.to_csv(output_path, index=False)
