@@ -32,6 +32,7 @@ def setup_output_directory(directory_path):
 condition_table['รหัส'] = condition_table['รหัส'].apply(lambda x: re.sub(r'[Xx]', r'\\d', x))
 
 def apply_conditions(main_df, condition_table, cancel_product, cancel_act, output_directory):
+    write_header = True
     for index, row in condition_table.iterrows():
         find_pattern = row['find']
         exclude_pattern = row['exclude G/L']
@@ -67,7 +68,10 @@ def apply_conditions(main_df, condition_table, cancel_product, cancel_act, outpu
         filtered_df = filtered_df.assign(เงื่อนไข2 = row['เงื่อนไข 2'])
 
         output_path = os.path.join(output_directory, f'result_{index + 1}.csv')
+        output_path_combine = os.path.join(output_directory, f'combine_result.csv')
         filtered_df.to_csv(output_path, index=False)
+        filtered_df.to_csv(output_path_combine, mode='a', index = False, header=write_header)
+        write_header = False
 
 def main():
     #ตั้งค่าโฟลเดอร์ผลลัพธ์
