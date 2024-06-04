@@ -42,12 +42,12 @@ def apply_conditions(main_df, condition_table, cancel_product, cancel_act, outpu
             filtered_df = filtered_df.loc[~filtered_df['G/L'].str.contains(exclude_pattern, na=False)]
 
         if pd.notna(find_pattern):
-            if 'product ' in find_pattern.lower():
-                product_code = ''.join(filter(str.isdigit, find_pattern))
-                filtered_product = main_df.loc[main_df['ผลิตภัณฑ์/'].str.contains(product_code, na=False)]
-                filtered_product = filtered_product.loc[~filtered_product['G/L'].str.contains(row['รหัส'], na=False, regex=True)]
-                filtered_df = filtered_df.loc[~filtered_df['ผลิตภัณฑ์/'].str.contains(product_code, na=False)]
-                filtered_df = pd.concat([filtered_product, filtered_df])
+            if 'segment ' in find_pattern.lower():
+                segment_code = ''.join(filter(str.isdigit, find_pattern))
+                filtered_segment = main_df.loc[main_df['เซกเมนต์'].str.contains(segment_code, na=False)]
+                filtered_segment = filtered_segment.loc[~filtered_segment['G/L'].str.contains(row['รหัส'], na=False, regex=True)]
+                filtered_df = filtered_df.loc[~filtered_df['เซกเมนต์'].str.contains(segment_code, na=False)]
+                filtered_df = pd.concat([filtered_segment, filtered_df])
 
             elif 'act ' in find_pattern.lower():
                 act_code = find_pattern.split()[1]
