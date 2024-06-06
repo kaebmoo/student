@@ -44,7 +44,7 @@ def apply_conditions(main_df, condition_table, cancel_product, cancel_act, outpu
         if pd.notna(find_pattern):
             if 'segment ' in find_pattern.lower():
                 segment_code = ''.join(filter(str.isdigit, find_pattern))
-                filtered_segment = main_df.loc[main_df['เซกเมนต์'].str.contains(segment_code, na=False)]
+                filtered_segment = filtered_df.loc[filtered_df['เซกเมนต์'].str.contains(segment_code, na=False)]
                 filtered_segment = filtered_segment.loc[~filtered_segment['G/L'].str.contains(row['รหัส'], na=False, regex=True)]
                 filtered_df = filtered_df.loc[~filtered_df['เซกเมนต์'].str.contains(segment_code, na=False)]
                 filtered_df = pd.concat([filtered_segment, filtered_df])
