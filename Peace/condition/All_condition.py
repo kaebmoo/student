@@ -9,17 +9,17 @@ def setup_output_directory(directory_path):
 
 def load_data():
     #ตารางเงื่อนไข
-    condition_table = pd.read_excel('./Peace/condition.xlsx', dtype=str)
+    condition_table = pd.read_excel('./Peace/condition/condition.xlsx', dtype=str)
 
     #ข้อมูลที่ต้องการนำมากรอง
-    main_df = pd.read_csv('./Peace/30042024.csv', dtype=str)
+    main_df = pd.read_csv('./Peace/condition/30042024.csv', dtype=str)
 
     #ตารางรหัสศูนย์ต้นทุน-รหัสบัญชี
-    account_name = pd.read_excel('./Peace/รหัสศูนย์ต้นทุน-รหัสบัญชี.xlsx', 'G L', dtype=str)
+    account_name = pd.read_excel('./Peace/condition/รหัสศูนย์ต้นทุน-รหัสบัญชี.xlsx', 'G L', dtype=str)
 
     #ตารางรวมรหัส กิจกรรม, Product ยกเลิก
-    cancel_product = pd.read_excel('./Peace/condition.xlsx', 'รหัส Product ยกเลิก', dtype=str)['รหัส']
-    cancel_act = pd.read_excel('./Peace/condition.xlsx', 'รหัสกิจกรรมยกเลิก')['Act']
+    cancel_product = pd.read_excel('./Peace/condition/condition.xlsx', 'รหัส Product ยกเลิก', dtype=str)['รหัส']
+    cancel_act = pd.read_excel('./Peace/condition/condition.xlsx', 'รหัสกิจกรรมยกเลิก')['Act']
 
     return condition_table, main_df, account_name, cancel_product, cancel_act
 
