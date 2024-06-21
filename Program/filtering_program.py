@@ -12,6 +12,10 @@ main_df = pd.read_csv('./Program/data.csv', dtype=str)
 
 # ตารางรหัสศูนย์ต้นทุน-รหัสบัญชี
 account_name = pd.read_excel('./Program/รหัสศูนย์ต้นทุน-รหัสบัญชี.xlsx', 'G L', dtype=str)
+cost_center = pd.read_excel('./Program/รหัสศูนย์ต้นทุน-รหัสบัญชี.xlsx', dtype=str)
+
+# ตารางชื่อผลิตภัณฑ์
+product_name = pd.read_excel('./Program/product_code.xlsx', dtype=str)
 
 # ตารางรวมรหัส กิจกรรม, Product ยกเลิก
 cancel_product = pd.read_excel('./Program/condition.xlsx', 'รหัส Product ยกเลิก', dtype=str)['รหัส']
@@ -23,6 +27,15 @@ cancel_act = pd.read_excel('./Program/condition.xlsx', 'รหัสกิจก
 main_df = pd.merge(main_df.drop(columns=['Stat']), account_name, on='G/L', how='left')
 col = main_df.pop('Stat')
 main_df.insert(1, col.name, col)
+
+# ใส้ชื่อชื่อศ.ต้นทุน
+main_df = pd.merge(main_df, cost_center, left_on='ศ.ต้นทุน', right_on='รหัสศูนย์ต้นทุน', how='left')
+main_df = main_df.drop(columns=['รหัสศูนย์ต้นทุน'])
+main_df = main_df.rename(columns={'ชื่อตามโครงสร้าง NT ':'ชื่อศ.ต้นทุน'})
+
+# ใส่ชื่อ Product
+main_df = pd.merge(main_df, product_name, left_on='ผลิตภัณฑ์/', right_on='รหัสผลิตภัณฑ์', how='left')
+main_df = main_df.drop(columns=['รหัสผลิตภัณฑ์'])
 
 def setup_output_directory(directory_path):
     shutil.rmtree(directory_path, ignore_errors=True)
